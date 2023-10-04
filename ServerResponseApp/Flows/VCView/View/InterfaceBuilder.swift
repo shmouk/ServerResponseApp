@@ -7,13 +7,5 @@ final class InterfaceBuilder {
         tableView.backgroundColor = .clear
         return tableView
     }
-    
-    static func makeTitleLabel() -> UILabel {
-        let label = UILabel()
-        label.translatesAutoresizingMaskIntoConstraints = false
-        label.backgroundColor = .clear
-        label.textColor = .black
-        return label
-    }
 }
 

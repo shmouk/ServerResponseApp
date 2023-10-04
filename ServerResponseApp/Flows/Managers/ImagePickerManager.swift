@@ -1,66 +1,33 @@
-//
-//  CameraAPI.swift
-//  ServerResponseApp
-//
-//  Created by Марк on 3.10.23.
-//
-
 import Foundation
 import Photos
 import UIKit
 
-class CameraViewModel {
-    var currentUser = Bindable(User())
-    let userAPI = UserAPI.shared
+class ImagePickerManager: NSObject {
+    var viewController: UIViewController?
+    var imagePickedBlock: ((UIImage) -> Void)?
     
-    func requestPhotoLibraryAccess(completion: @escaping (Bool) -> ()) {
-        PHPhotoLibrary.requestAuthorization { status in
-            switch status {
-            case .authorized:
-                DispatchQueue.main.async {
-                    completion(true)
-                }
-            case .denied, .restricted, .notDetermined, .limited:
-                DispatchQueue.main.async {
-                    completion(false)
-                }
-            @unknown default:
-                completion(false)
-            }
-        }
-    }
-    
-}
-extension CameraViewModel: UIImagePickerControllerDelegate {
-    
-    func selectProfileImageView() {
-        let picker = UIImagePickerController()
-        picker.delegate = self
-        picker.allowsEditing = true
-        picker.sourceType = .savedPhotosAlbum
-        present(picker, animated: true)
-    }
-    
-    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
-        var selectedImageFromPicker: UIImage?
+    func pickCamera(_ viewController: UIViewController, _ completion: @escaping (UIImage) -> Void) {
+        self.viewController = viewController
+        self.imagePickedBlock = completion
         
-        if let editedImage = info[.editedImage] as? UIImage {
-            selectedImageFromPicker = editedImage
-        } else if let originalImage = info[.originalImage] as? UIImage {
-            selectedImageFromPicker = originalImage
-        }
-        
-        if let selectedImage = selectedImageFromPicker {
-            profileImageView.image = selectedImage
-            profileViewModel.loadImagePicker(image: selectedImage)
-        }
-        dismiss(animated: true)
+        let imagePicker = UIImagePickerController()
+        imagePicker.delegate = self
+        imagePicker.sourceType = .camera
+        viewController.present(imagePicker, animated: true, completion: nil)
     }
 }
 
-extension CameraViewModel: UINavigationControllerDelegate {
+extension ImagePickerManager: UIImagePickerControllerDelegate {
+    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
+        picker.dismiss(animated: true, completion: nil)
+        
+        if let image = info[UIImagePickerController.InfoKey.originalImage] as? UIImage {
+            imagePickedBlock?(image)
+        }
+    }
+}
+extension ImagePickerManager: UINavigationControllerDelegate {
     func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
-        dismiss(animated: true)
+        picker.dismiss(animated: true, completion: nil)
     }
 }
-
